@@ -39,3 +39,6 @@
 
 # debug information files
 *.dwo
+
+# Remove puzzle inputs for Advent of Code
+*-input.txt
