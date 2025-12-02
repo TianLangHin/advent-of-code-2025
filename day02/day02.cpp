@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <numeric>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -60,7 +59,7 @@ long long part1(const std::vector<std::pair<long long, long long>>& intervals) {
 }
 
 long long part2(const std::vector<std::pair<long long, long long>>& intervals) {
-    std::set<long long> invalid_ids;
+    long long total = 0;
     for (const auto& [fst, snd] : intervals) {
         int digits_lower_bound = digits(fst);
         int digits_upper_bound = digits(snd);
@@ -76,12 +75,13 @@ long long part2(const std::vector<std::pair<long long, long long>>& intervals) {
         for (long long num = fst; num <= snd; num++) {
             for (auto& [factor, threshold] : factors) {
                 if (num % factor == 0 && num / factor < threshold) {
-                    invalid_ids.insert(num);
+                    total += num;
+                    break;
                 }
             }
         }
     }
-    return std::reduce(invalid_ids.begin(), invalid_ids.end());
+    return total;
 }
 
 int main() {
