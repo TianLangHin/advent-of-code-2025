@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -5,32 +6,30 @@
 int part1(const std::vector<std::vector<int>>& batteries) {
     int total = 0;
     for (const std::vector<int>& row : batteries) {
-        std::vector<int> left;
-        std::vector<int> right;
-        int left_max = 0;
-        left.push_back(left_max);
-        for (int i = 0; i < row.size() - 1; i++) {
-            left_max = std::max(left_max, row[i]);
-            left.push_back(left_max);
+        auto it1 = std::max_element(row.begin(), row.end() - 1);
+        auto it2 = std::max_element(it1 + 1, row.end());
+        total += 10 * (*it1) + (*it2);
+    }
+    return total;
+}
+
+long long part2(const std::vector<std::vector<int>>& batteries) {
+    long long total = 0;
+    for (const std::vector<int>& row : batteries) {
+        long long number = 0;
+        int start_index = 0;
+        for (int remaining = 11; remaining >= 0; remaining--) {
+            auto it = std::max_element(row.begin() + start_index, row.end() - remaining);
+            start_index = it - row.begin() + 1;
+            number = number * 10 + *it;
         }
-        int right_max = row.back();
-        right.push_back(right_max);
-        for (int i = row.size() - 2; i >= 0; i--) {
-            right_max = std::max(right_max, row[i]);
-            right.push_back(right_max);
-        }
-        int best = 0;
-        for (int i = 0; i < row.size(); i++) {
-            best = std::max(best, left[i] * 10 + right[row.size() - 1 - i]);
-        }
-        total += best;
+        total += number;
     }
     return total;
 }
 
 int main() {
     std::ifstream puzzle_input("day-3-puzzle-input.txt");
-    // std::ifstream puzzle_input("test-puzzle-input.txt");
     std::string line;
 
     std::vector<std::vector<int>> batteries;
@@ -51,4 +50,5 @@ int main() {
     }
 
     std::cout << part1(batteries) << "\n";
+    std::cout << part2(batteries) << "\n";
 }
