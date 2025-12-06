@@ -5,7 +5,10 @@
 #include <numeric>
 #include <ranges>
 #include <sstream>
+#include <utility>
 #include <vector>
+
+typedef std::pair<std::vector<std::vector<long long>>, std::vector<bool>> part1_t;
 
 long long part1(
     const std::vector<std::vector<long long>> numbers,
@@ -24,8 +27,8 @@ long long part1(
     });
 }
 
-int main() {
-    std::ifstream puzzle_input("day-6-puzzle-input.txt");
+part1_t part1_parse(std::string filename) {
+    std::ifstream puzzle_input(filename);
     std::string line;
 
     std::vector<std::vector<long long>> numbers;
@@ -59,5 +62,64 @@ int main() {
         }
     }
 
+    return { numbers, is_adding };
+}
+
+long long part2(std::vector<std::string> lines) {
+    std::string operators = lines.back();
+
+    long long total = 0;
+    std::vector<long long> numbers;
+    int previous_operator = 0;
+
+    for (int col = 0; col < operators.size(); col++) {
+        if (operators[col] != ' ' && previous_operator != col) {
+            char op = operators[previous_operator];
+            long long result = op == '+'
+                ? std::accumulate(numbers.begin(), numbers.end(), 0ll, std::plus<long long> {})
+                : std::accumulate(numbers.begin(), numbers.end(), 1ll, std::multiplies<long long> {});
+            total += result;
+            numbers.clear();
+            previous_operator = col;
+        }
+        long long number = 0ll;
+        bool non_empty = false;
+        for (int row = 0; row < lines.size() - 1; row++) {
+            if (lines[row][col] == ' ') {
+                continue;
+            }
+            non_empty = true;
+            number = number * 10 + (long long)(lines[row][col] - '0');
+        }
+        if (non_empty) {
+            numbers.push_back(number);
+        }
+    }
+    char op = operators[previous_operator];
+    long long result = op == '+'
+        ? std::accumulate(numbers.begin(), numbers.end(), 0ll, std::plus<long long> {})
+        : std::accumulate(numbers.begin(), numbers.end(), 1ll, std::multiplies<long long> {});
+    total += result;
+    return total;
+}
+
+int main() {
+    std::string filename = "day-6-puzzle-input.txt";
+
+    auto [numbers, is_adding] = part1_parse(filename);
     std::cout << part1(numbers, is_adding) << "\n";
+
+    std::ifstream puzzle_input(filename);
+    std::vector<std::string> lines;
+    std::string line;
+    if (puzzle_input.is_open()) {
+        while (puzzle_input.good()) {
+            std::getline(puzzle_input, line);
+            if (!line.empty()) {
+                lines.push_back(line);
+            }
+        }
+    }
+
+    std::cout << part2(lines) << "\n";
 }
