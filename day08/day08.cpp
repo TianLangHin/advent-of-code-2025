@@ -20,10 +20,6 @@ long long squared_dist(point_t p1, point_t p2) {
     return x*x + y*y + z*z;
 }
 
-bool comparator(connection_t c1, connection_t c2) {
-    return std::get<0>(c1) < std::get<0>(c2);
-}
-
 int dfs(point_t point, const graph_t& graph, std::set<point_t>& seen) {
     if (seen.contains(point)) {
         return 0;
@@ -38,6 +34,10 @@ int dfs(point_t point, const graph_t& graph, std::set<point_t>& seen) {
 
 int part1(const std::vector<point_t>& points) {
     int pair_number = 1000;
+    auto max_heap_comparator = [](auto c1, auto c2) {
+        return std::get<0>(c1) < std::get<0>(c2);
+    };
+
     std::vector<connection_t> connections {};
     for (int i = 0; i < points.size(); ++i) {
         point_t p1 = points[i];
@@ -47,18 +47,20 @@ int part1(const std::vector<point_t>& points) {
                 continue;
             }
             connections.push_back({ squared_dist(p1, p2), p1, p2 });
-            std::push_heap(connections.begin(), connections.end(), comparator);
+            std::push_heap(connections.begin(), connections.end(), max_heap_comparator);
             if (connections.size() > pair_number) {
-                std::pop_heap(connections.begin(), connections.end(), comparator);
+                std::pop_heap(connections.begin(), connections.end(), max_heap_comparator);
                 connections.pop_back();
             }
         }
     }
+
     graph_t graph;
     for (auto [_, p1, p2] : connections) {
         graph[p1].push_back(p2);
         graph[p2].push_back(p1);
     }
+
     std::vector<int> cluster_sizes;
     std::set<point_t> seen;
     for (auto [point, _] : graph) {
@@ -76,9 +78,47 @@ int part1(const std::vector<point_t>& points) {
     return std::accumulate(cluster_sizes.begin(), cluster_sizes.end(), 1, std::multiplies<int> {});
 }
 
+int part2(const std::vector<point_t>& points) {
+    auto min_heap_comparator = [](auto c1, auto c2) {
+        return std::get<0>(c1) > std::get<0>(c2);
+    };
+
+    std::vector<connection_t> connections {};
+    for (int i = 0; i < points.size(); ++i) {
+        point_t p1 = points[i];
+        for (int j = i+1; j < points.size(); ++j) {
+            point_t p2 = points[j];
+            if (p1 == p2) {
+                continue;
+            }
+            connections.push_back({ squared_dist(p1, p2), p1, p2 });
+            std::push_heap(connections.begin(), connections.end(), min_heap_comparator);
+        }
+    }
+
+    graph_t graph;
+    while (!connections.empty()) {
+        auto [_, p1, p2] = connections[0];
+        std::pop_heap(connections.begin(), connections.end(), min_heap_comparator);
+        connections.pop_back();
+
+        graph[p1].push_back(p2);
+        graph[p2].push_back(p1);
+
+        std::set<point_t> seen {};
+        int cluster_size = dfs(p1, graph, seen);
+        if (cluster_size == points.size()) {
+            int x1, x2;
+            std::tie(x1, std::ignore, std::ignore) = p1;
+            std::tie(x2, std::ignore, std::ignore) = p2;
+            return x1 * x2;
+        }
+    }
+    return 0;
+}
+
 int main() {
     std::ifstream puzzle_input("day-8-puzzle-input.txt");
-    // std::ifstream puzzle_input("test-puzzle-input.txt");
     std::string line;
 
     std::vector<point_t> points;
@@ -101,4 +141,5 @@ int main() {
     }
 
     std::cout << part1(points) << "\n";
+    std::cout << part2(points) << "\n";
 }
